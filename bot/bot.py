@@ -30,7 +30,7 @@ async def message_handler(message: types.Message):
         )
 
         words_cursor = db.words.find()
-        words = await words_cursor.to_list()
+        words = await words_cursor.to_list(length=100)
         random_words_count = random.choice(range(10))
         random_words = random.choices(words, k=random_words_count)
         sentence = ' '.join([x['word'] for x in random_words])
