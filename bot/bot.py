@@ -1,12 +1,12 @@
 from aiogram import Bot, Dispatcher, executor, types
 import os
-import motor.motor_tornado
+import motor.motor_asyncio
 import random
 
 bot = Bot(os.environ.get('BOT_TOKEN'))
 dp = Dispatcher(bot)
 
-db = motor.motor_tornado.MotorClient().funnybot
+db = motor.motor_asyncio.MotorClient().funnybot
 
 
 @dp.message_handler(content_types=types.ContentTypes.TEXT)
