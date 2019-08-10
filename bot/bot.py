@@ -6,7 +6,7 @@ import random
 bot = Bot(os.environ.get('BOT_TOKEN'))
 dp = Dispatcher(bot)
 
-db = motor.motor_asyncio.MotorClient().funnybot
+db = motor.motor_asyncio.AsyncIOMotorClient().funnybot
 
 
 @dp.message_handler(content_types=types.ContentTypes.TEXT)
