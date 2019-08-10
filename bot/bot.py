@@ -23,7 +23,7 @@ async def message_handler(message: types.Message):
         upsert=True)
 
     counter = await db.message_counters.find_one({'chat_id': message.chat.id})
-    if counter.get('count') >= os.environ.get('COUNT_TO_RESET'):
+    if counter.get('count') >= int(os.environ.get('COUNT_TO_RESET')):
         await db.message_counters.update_one(
             {'_id': counter.get('_id')},
             {'$set': {'count': 0}}
