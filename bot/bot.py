@@ -29,7 +29,8 @@ async def message_handler(message: types.Message):
             {'$set': {'count': 0}}
         )
 
-        words = list(await db.words.find())
+        words_cursor = db.words.find()
+        words = await words_cursor.to_list()
         random_words_count = random.choice(range(10))
         random_words = random.choices(words, k=random_words_count)
         sentence = ' '.join([x['word'] for x in random_words])
