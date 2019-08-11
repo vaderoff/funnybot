@@ -28,7 +28,7 @@ async def punch_session_start():
         CHAT_ID, photo, caption='Ударь меня', reply_markup=markup)
 
 
-@dp.callback_query_handler(lambda x: x.data == 'punch' and x.chat.id == CHAT_ID)
+@dp.callback_query_handler(lambda x: x.data == 'punch' and x.message.chat.id == CHAT_ID)
 async def punch(callback: types.CallbackQuery):
     punch_session = await db.punch_sessions.find_one({'chat_id': CHAT_ID})
     if callback.from_user.id not in punch_session['members']:
@@ -39,6 +39,7 @@ async def punch(callback: types.CallbackQuery):
             {'chat_id': CHAT_ID},
             {'$inc': {'members': [callback.from_user.id]}}
         )
+        await callback.answer('👅{}👅'.format(power))
         await bot.send_message(
             chat_id, text, reply_to_message_id=callback.message.message_id,
             parse_mode='Html')
