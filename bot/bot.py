@@ -32,12 +32,13 @@ async def punch_session_start():
 async def punch(callback: types.CallbackQuery):
     punch_session = await db.punch_sessions.find_one({'chat_id': CHAT_ID})
     if callback.from_user.id not in punch_session['members']:
+        punch_session['members'].append(callback.from_user.id)
         power = random.choice(POWER_POINTS)
         text = '<a href="tg://user?id={}">{}</a> ударил на <b>{}</b> 😵'.format(
             callback.from_user.id, callback.from_user.first_name, power)
         await db.punch_sessions.update_one(
             {'chat_id': CHAT_ID},
-            {'$inc': {'members': [callback.from_user.id]}}
+            {'$set': {'members': punch_session['members']}}
         )
         await callback.answer('👅{}👅'.format(power))
         await bot.send_message(
