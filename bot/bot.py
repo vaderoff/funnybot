@@ -16,7 +16,7 @@ DELAY = int(os.environ.get('DELAY'))
 POWER_POINTS = range(100, 1000)
 
 
-async def punch_session_start(loop):
+async def punch_session_start():
     await db.punch_sessions.update_one(
         {'chat_id': CHAT_ID},
         {'$set': {'members': [], 'chat_id': CHAT_ID}},
