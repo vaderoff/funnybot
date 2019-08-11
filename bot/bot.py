@@ -9,7 +9,7 @@ dp = Dispatcher(bot, run_tasks_by_default=True)
 
 db = motor.motor_asyncio.AsyncIOMotorClient('mongo', 27017).funnybot
 
-CHAT_ID = os.environ.get('CHAT_ID')
+CHAT_ID = int(os.environ.get('CHAT_ID'))
 PHOTOS = os.environ.get('PUNCH_PHOTOS').split(',')
 DELAY = os.environ.get('DELAY')
 
