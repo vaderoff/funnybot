@@ -29,7 +29,7 @@ async def punch_session_start(loop):
     loop.call_later(DELAY, punch_session_start, loop)
 
 
-@dp.callback_query_handler(lambda x: x.data == 'punch', x.chat.id == CHAT_ID)
+@dp.callback_query_handler(lambda x: x.data == 'punch' and x.chat.id == CHAT_ID)
 async def punch(callback: types.CallbackQuery):
     punch_session = await db.punch_sessions.find_one({'chat_id': CHAT_ID})
     if callback.from_user.id not in punch_session['members']:
