@@ -24,7 +24,8 @@ async def punch_session_start(loop):
     markup = types.InlineKeyboardMarkup(inline_keyboard=[
         types.InlineKeyboardButton('Ударить', callback_data='punch')])
     photo = random.choice(PHOTOS)
-    await bot.send_photo(CHAT_ID, photo, caption='Ударь меня', reply_markup=markup)
+    await bot.send_photo(
+        CHAT_ID, photo, caption='Ударь меня', reply_markup=markup)
     loop.call_later(DELAY, punch_session_start, loop)
 
 
