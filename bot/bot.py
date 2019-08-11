@@ -38,7 +38,7 @@ async def punch(callback: types.CallbackQuery):
         await db.punch_sessions.update_one(
             {'chat_id': CHAT_ID},
             {'$inc': {'members': [callback.from_user.id]}}
-        }
+        })
         await bot.send_message(
             chat_id, text, reply_to_message_id=callback.message.message_id,
             parse_mode='Html')
