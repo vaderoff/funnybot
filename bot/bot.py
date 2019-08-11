@@ -42,5 +42,5 @@ async def punch(callback: types.CallbackQuery):
         )
         await callback.answer('👅{}👅'.format(power))
         await bot.send_message(
-            chat_id, text, reply_to_message_id=callback.message.message_id,
+            CHAT_ID, text, reply_to_message_id=callback.message.message_id,
             parse_mode='Html')
