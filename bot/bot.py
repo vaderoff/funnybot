@@ -26,7 +26,6 @@ async def punch_session_start(loop):
     photo = random.choice(PHOTOS)
     await bot.send_photo(
         CHAT_ID, photo, caption='Ударь меня', reply_markup=markup)
-    loop.call_later(DELAY, punch_session_start, loop)
 
 
 @dp.callback_query_handler(lambda x: x.data == 'punch' and x.chat.id == CHAT_ID)
