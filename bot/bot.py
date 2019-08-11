@@ -21,8 +21,8 @@ async def punch_session_start():
         {'chat_id': CHAT_ID},
         {'$set': {'members': [], 'chat_id': CHAT_ID}},
         upsert=True)
-    markup = types.InlineKeyboardMarkup(inline_keyboard=[
-        types.InlineKeyboardButton('Ударить', callback_data='punch')])
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton('Ударить', callback_data='punch'))
     photo = random.choice(PHOTOS)
     await bot.send_photo(
         CHAT_ID, photo, caption='Ударь меня', reply_markup=markup)
