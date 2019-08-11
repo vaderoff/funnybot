@@ -11,7 +11,7 @@ db = motor.motor_asyncio.AsyncIOMotorClient('mongo', 27017).funnybot
 
 CHAT_ID = int(os.environ.get('CHAT_ID'))
 PHOTOS = os.environ.get('PUNCH_PHOTOS').split(',')
-DELAY = os.environ.get('DELAY')
+DELAY = int(os.environ.get('DELAY'))
 
 POWER_POINTS = range(100, 1000)
 
