@@ -2,37 +2,43 @@ from aiogram import Bot, Dispatcher, executor, types
 import os
 import motor.motor_asyncio
 import random
+import asyncio
 
 bot = Bot(os.environ.get('BOT_TOKEN'))
-dp = Dispatcher(bot)
+dp = Dispatcher(bot, run_tasks_by_default=True)
 
 db = motor.motor_asyncio.AsyncIOMotorClient('mongo', 27017).funnybot
 
+CHAT_ID = os.environ.get('CHAT_ID')
+PHOTOS = os.environ.get('PUNCH_PHOTOS').split(',')
+DELAY = os.environ.get('DELAY')
 
-@dp.message_handler(content_types=types.ContentTypes.TEXT)
-async def message_handler(message: types.Message):
-    words = message.text.split()
-    await db.words.insert_many([{'word': x} for x in words])
+POWER_POINTS = range(100, 1000)
 
-    await db.message_counters.update_one(
-        {'chat_id': message.chat.id},
-        {
-            '$inc': {'count': 1},
-            '$set': {'chat_id': message.chat.id}
-        },
+
+async def punch_session_start(loop):
+    await db.punch_sessions.update_one(
+        {'chat_id': CHAT_ID},
+        {'$set': {'members': [], 'chat_id': CHAT_ID}},
         upsert=True)
+    markup = types.InlineKeyboardMarkup(inline_keyboard=[
+        types.InlineKeyboardButton('Ударить', callback_data='punch')])
+    photo = random.choice(PHOTOS)
+    await bot.send_photo(CHAT_ID, photo, caption='Ударь меня', reply_markup=markup)
+    loop.call_later(DELAY, punch_session_start, loop)
 
-    counter = await db.message_counters.find_one({'chat_id': message.chat.id})
-    if counter.get('count') >= int(os.environ.get('COUNT_TO_RESET')):
-        await db.message_counters.update_one(
-            {'_id': counter.get('_id')},
-            {'$set': {'count': 0}}
-        )
 
-        words_cursor = db.words.find()
-        words = await words_cursor.to_list(length=100)
-        random_words_count = random.choice(range(3, 10))
-        random_words = random.choices(words, k=random_words_count)
-        sentence = ' '.join([x['word'] for x in random_words]).lower()
-
-        await message.reply(sentence)
+@dp.callback_query_handler(lambda x: x.data == 'punch', x.chat.id == CHAT_ID)
+async def punch(callback: types.CallbackQuery):
+    punch_session = await db.punch_sessions.find_one({'chat_id': CHAT_ID})
+    if callback.from_user.id not in punch_session['members']:
+        power = random.choice(POWER_POINTS)
+        text = '<a href="tg://user?id={}">{}</a> ударил на <b>{}</b> 😵'.format(
+            callback.from_user.id, callback.from_user.first_name, power)
+        await db.punch_sessions.update_one(
+            {'chat_id': CHAT_ID},
+            {'$inc': {'members': [callback.from_user.id]}}
+        }
+        await bot.send_message(
+            chat_id, text, reply_to_message_id=callback.message.message_id,
+            parse_mode='Html')
