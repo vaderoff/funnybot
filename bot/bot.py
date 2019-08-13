@@ -74,7 +74,7 @@ async def casino_pick(callback: types.CallbackQuery):
     chat_id = callback.message.chat.id
     session = await db.casino_sessions.find_one({'chat_id': chat_id, 'active': True})
     if session and callback.from_user.id not in [x['user_id'] for x in session['players']]:
-        ball = callback.data.split(':')[1]
+        ball = int(callback.data.split(':')[1])
         session['players'].append({'user_id': callback.from_user.id, 'name': callback.from_user.first_name, 'ball': ball})
         
         await db.casino_sessions.update_one({'chat_id': chat_id}, {'$set': {'players': session['players']}})
