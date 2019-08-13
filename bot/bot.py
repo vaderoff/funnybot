@@ -14,7 +14,7 @@ DELAY = int(os.environ.get('DELAY'))
 
 
 class Casino:
-    balls = [[':red_circle:', 0], [':black_circle:', 1]]
+    balls = [['⚽', 0], ['🏀', 1]]
 
     def get_ball(self):
         return random.choice(balls)
@@ -78,6 +78,8 @@ async def casino_pick(callback: types.CallbackQuery):
         session['players'].append({'user_id': callback.from_user.id, 'name': callback.from_user.first_name, 'ball': ball})
         
         await db.casino_sessions.update_one({'chat_id': chat_id}, {'$set': {'players': session['players']}})
+
+        await callback.answer(casino.balls[ball][0])
 
         text = '<a href="tg://user?id={}">{}</a> выбрал {} шар'.format(callback.from_user.id, callback.from_user.first_name, casino.balls[ball][0])
         await bot.send_message(chat_id, text, parse_mode='Html')
