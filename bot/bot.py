@@ -17,7 +17,7 @@ class Casino:
     balls = [['⚽', 0], ['🏀', 1]]
 
     def get_ball(self):
-        return random.choice(balls)
+        return random.choice(self.balls)
 
     async def new_session(self, chat_id):
         await db.casino_sessions.insert_one({
