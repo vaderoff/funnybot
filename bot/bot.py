@@ -3,44 +3,88 @@ import os
 import motor.motor_asyncio
 import random
 import asyncio
+from bson.objectid import ObjectId
 
 bot = Bot(os.environ.get('BOT_TOKEN'))
 dp = Dispatcher(bot, run_tasks_by_default=True)
 
 db = motor.motor_asyncio.AsyncIOMotorClient('mongo', 27017).funnybot
 
-CHAT_ID = int(os.environ.get('CHAT_ID'))
-PHOTOS = os.environ.get('PUNCH_PHOTOS').split(',')
 DELAY = int(os.environ.get('DELAY'))
 
-POWER_POINTS = range(100, 1000)
 
+class Casino:
+    balls = [[':red_circle:', 0], [':black_circle:', 1]]
 
-async def punch_session_start():
-    await db.punch_sessions.update_one(
-        {'chat_id': CHAT_ID},
-        {'$set': {'members': [], 'chat_id': CHAT_ID}},
-        upsert=True)
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton('Ударить', callback_data='punch'))
-    photo = random.choice(PHOTOS)
-    await bot.send_photo(
-        CHAT_ID, photo, caption='Ударь меня', reply_markup=markup)
+    def get_ball(self):
+        return random.choice(balls)
 
-
-@dp.callback_query_handler(lambda x: x.data == 'punch' and x.message.chat.id == CHAT_ID)
-async def punch(callback: types.CallbackQuery):
-    punch_session = await db.punch_sessions.find_one({'chat_id': CHAT_ID})
-    if callback.from_user.id not in punch_session['members']:
-        punch_session['members'].append(callback.from_user.id)
-        power = random.choice(POWER_POINTS)
-        text = '<a href="tg://user?id={}">{}</a> ударил на <b>{}</b> 😵'.format(
-            callback.from_user.id, callback.from_user.first_name, power)
-        await db.punch_sessions.update_one(
-            {'chat_id': CHAT_ID},
-            {'$set': {'members': punch_session['members']}}
+    async def new_session(self, chat_id):
+        await db.casino_sessions.insert({
+            'chat_id': chat_id,
+            'players': [],
+            'active': True
+        })
+        markup = types.InlineKeyboardMarkup()
+        markup.add(
+            types.InlineKeyboardButton(self.balls[0][0], callback_data='casino:{}'.format(self.balls[0][1])),
+            types.InlineKeyboardButton(self.balls[1][0], callback_data='casino:{}'.format(self.balls[1][1]))
         )
-        await callback.answer('👅{}👅'.format(power))
-        await bot.send_message(
-            CHAT_ID, text, reply_to_message_id=callback.message.message_id,
-            parse_mode='Html')
+        bot.send_message(chat_id, 'Выбери шар', reply_markup=markup)
+
+    async def play_session(self, chat_id):
+        session = await db.casino_sessions.find_one({'chat_id': chat_id, 'active': True})
+        if session:
+            ball = self.get_ball()
+            winners = [x for x in session['players'] if x['ball'] == ball[1]]
+            _winners = []
+            for winner in winners:
+                await db.casino_winners.update_one(
+                    {'user_id': winner['user_id']},
+                    {
+                        '$inc': {'win_count': 1},
+                        '$set': {'user_id': winner['user_id'], 'name': winner['name']}
+                    },
+                    upsert=True
+                )
+                _winners.append(await db.casino_winners.find_one({'user_id': winner['user_id']}))
+            await db.casino_sessions.update_one({'chat_id': chat_id}, {'$set': {'active': False}})
+            text = ['Выпал {} шар'.format(ball[0]), 'Победители:']
+            text.extend([' - <a href="tg://user?id={}">{}</a> (побед: {})'.format(x['user_id'], x['name'], x['win_count']) for x in _winners])
+            bot.send_message(chat_id, '\n'.join(text), parse_mode='Html')
+
+
+casino = Casino()
+
+
+@dp.message_handler()
+async def message_handler(message: types.Message):
+    # add chat to db
+    update = await db.chats.update_one(
+        {'chat_id': message.chat.id},
+        {'$set': {'chat_id': message.chat.id}},
+        upsert=True)
+
+    if isinstance(update.upserted_id, ObjectId):
+        await casino.new_session(message.chat.id)
+
+
+@dp.callback_query_handler(lambda x: x.data.startswith('casino:'))
+async def casino_pick(callback: types.CallbackQuery):
+    chat_id = callback.message.chat.id
+    session = await db.casino_sessions.find_one({'chat_id': chat_id, 'active': True})
+    if session and callback.from_user.id not in [x['user_id'] for x in session['players']]:
+        ball = callback.data.split(':')[1]
+        session['players'].append({'user_id': callback.from_user.id, 'name': callback.from_user.first_name, 'ball': ball})
+        
+        await db.casino_sessions.update_one({'chat_id': chat_id}, {'$set': {'players': session['players']}})
+
+        text = '<a href="tg://user?id={}">{}</a> выбрал {} шар'.format(callback.from_user.id, callback.from_user.first_name, casino.balls[ball][0])
+        await bot.send_message(chat_id, text, parse_mode='Html')
+
+
+async def session_checker():
+    sessions = await db.casino_sessions.find({'active': True})
+    for session in sessions:
+        casino.play_session(session['chat_id'])
+        casino.new_session(session['chat_id'])

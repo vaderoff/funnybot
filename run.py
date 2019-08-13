@@ -9,5 +9,5 @@ def repeat(coro, loop):
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.call_later(DELAY, repeat, punch_session_start, loop)
+    repeat(punch_session_start, loop)
     executor.start_polling(dp, loop=loop)
