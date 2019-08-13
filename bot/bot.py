@@ -65,7 +65,7 @@ async def message_handler(message: types.Message):
         {'$set': {'chat_id': message.chat.id}},
         upsert=True)
 
-    if update.upserted_id
+    if update.upserted_id:
         await casino.new_session(message.chat.id)
 
 
