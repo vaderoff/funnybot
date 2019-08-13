@@ -1,4 +1,4 @@
-from bot.bot import executor, dp, punch_session_start, DELAY
+from bot.bot import executor, dp, session_checker, DELAY
 import asyncio
 
 
@@ -9,5 +9,5 @@ def repeat(coro, loop):
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    repeat(punch_session_start, loop)
+    repeat(session_checker, loop)
     executor.start_polling(dp, loop=loop)
