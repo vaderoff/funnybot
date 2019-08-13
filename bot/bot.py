@@ -30,7 +30,7 @@ class Casino:
             types.InlineKeyboardButton(self.balls[0][0], callback_data='casino:{}'.format(self.balls[0][1])),
             types.InlineKeyboardButton(self.balls[1][0], callback_data='casino:{}'.format(self.balls[1][1]))
         )
-        bot.send_message(chat_id, 'Выбери шар', reply_markup=markup)
+        await bot.send_message(chat_id, 'Выбери шар', reply_markup=markup)
 
     async def play_session(self, chat_id):
         session = await db.casino_sessions.find_one({'chat_id': chat_id, 'active': True})
@@ -51,7 +51,7 @@ class Casino:
             await db.casino_sessions.update_one({'chat_id': chat_id}, {'$set': {'active': False}})
             text = ['Выпал {} шар'.format(ball[0]), 'Победители:']
             text.extend([' - <a href="tg://user?id={}">{}</a> (побед: {})'.format(x['user_id'], x['name'], x['win_count']) for x in _winners])
-            bot.send_message(chat_id, '\n'.join(text), parse_mode='Html')
+            await bot.send_message(chat_id, '\n'.join(text), parse_mode='Html')
 
 
 casino = Casino()
@@ -86,5 +86,5 @@ async def casino_pick(callback: types.CallbackQuery):
 async def session_checker():
     sessions = db.casino_sessions.find({'active': True})
     for session in await sessions.to_list(length=100):
-        casino.play_session(session['chat_id'])
-        casino.new_session(session['chat_id'])
+        await casino.play_session(session['chat_id'])
+        await casino.new_session(session['chat_id'])
