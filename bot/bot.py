@@ -85,6 +85,6 @@ async def casino_pick(callback: types.CallbackQuery):
 
 async def session_checker():
     sessions = db.casino_sessions.find({'active': True})
-    for session in await sessions.to_list(max_length=100):
+    for session in await sessions.to_list(length=100):
         casino.play_session(session['chat_id'])
         casino.new_session(session['chat_id'])
